@@ -9,8 +9,9 @@ import java.net.URL;
 
 
 public class Request {
-    public static void main(String[] args) throws IOException {
-        String url = "https://www.kinopoisk.ru/api/suggest/?query=john";
+
+    public static String search(String request) throws IOException {
+        String url = "https://www.kinopoisk.ru/api/suggest/?query="+ request;
 //        System.out.println("Введите запрос");
 //        Scanner h= new Scanner(System.in);
 //        String name = h.nextLine();
@@ -42,7 +43,10 @@ public class Request {
         }
         in.close();
 
-        System.out.println(response.toString());
+        String result = response.toString();
+       // System.out.println(result);
+
+        return result;
 
     }
 }
