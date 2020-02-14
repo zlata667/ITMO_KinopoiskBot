@@ -6,8 +6,108 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.*;
 import java.net.URL;
+import java.util.List;
+import java.util.Scanner;
+import com.google.gson.GsonBuilder;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.reflect.TypeToken;
+class Person {
 
+    private String id;
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    private String name;
+    private String title;
+    private String url;
+    private String originalName;
+    private String type;
+    private String brithYear;
+    private String x1;
+    private String originalTitle;
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getOriginalName() {
+        return originalName;
+    }
+
+    public void setOriginalName(String originalName) {
+        this.originalName = originalName;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getBrithYear() {
+        return brithYear;
+    }
+
+    public void setBrithYear(String brithYear) {
+        this.brithYear = brithYear;
+    }
+
+    public String getX1() {
+        return x1;
+    }
+
+    public void setX1(String x1) {
+        this.x1 = x1;
+    }
+
+    public String getOriginalTitle() {
+        return originalTitle;
+    }
+
+    public void setOriginalTitle(String originalTitle) {
+        this.originalTitle = originalTitle;
+    }
+
+    public String getYear() {
+        return year;
+    }
+
+    public void setYear(String year) {
+        this.year = year;
+    }
+
+    private String year;
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+}
 public class Request {
 
     public static String search(String request) throws IOException {
@@ -45,7 +145,11 @@ public class Request {
 
         String result = response.toString();
        // System.out.println(result);
+        Gson gson = new Gson();
 
+        Type type = new TypeToken<List<Person>>(){}.getType();
+        List<Person> person = gson.fromJson(result, type);
+        System.out.println(person);
         return result;
 
     }
