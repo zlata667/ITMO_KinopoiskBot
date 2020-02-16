@@ -8,6 +8,7 @@ import java.net.MalformedURLException;
 import java.net.*;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import com.google.gson.GsonBuilder;
 import com.google.gson.Gson;
@@ -39,7 +40,16 @@ class Person {
     private String originalName;
     private String type;
     private String brithYear;
-    private String x1;
+    private Map<String, String> imgSrcSet;
+
+    public Map<String, String> getImgSrcSet() {
+        return imgSrcSet;
+    }
+
+    public void setImgSrcSet(Map<String, String> imgSrcSet) {
+        this.imgSrcSet = imgSrcSet;
+    }
+
     private String originalTitle;
 
     public String getUrl() {
@@ -72,14 +82,6 @@ class Person {
 
     public void setBrithYear(String brithYear) {
         this.brithYear = brithYear;
-    }
-
-    public String getX1() {
-        return x1;
-    }
-
-    public void setX1(String x1) {
-        this.x1 = x1;
     }
 
     public String getOriginalTitle() {
