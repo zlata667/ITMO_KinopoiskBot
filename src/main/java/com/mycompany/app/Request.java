@@ -4,126 +4,27 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.*;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
-import com.google.gson.GsonBuilder;
+
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.reflect.TypeToken;
-class Person {
 
-    private String id;
+class Request {
 
-    public String getName() {
-        return name;
-    }
+    static String search(String request) throws IOException {
 
-    public void setName(String name) {
-        this.name = name;
-    }
+        request = URLEncoder.encode(request);// кодируем на случай, если поиск на русском языке
 
-    public String getTitle() {
-        return title;
-    }
+        Gson gson = new Gson();
+        String url = "https://www.kinopoisk.ru/api/suggest/?query=" + request;
+        URL urlObj = new URL(url);
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
+        HttpURLConnection connection = (HttpURLConnection) urlObj.openConnection();
 
-    private String name;
-    private String title;
-    private String url;
-    private String originalName;
-    private String type;
-    private String brithYear;
-    private Map<String, String> imgSrcSet;
-
-    public Map<String, String> getImgSrcSet() {
-        return imgSrcSet;
-    }
-
-    public void setImgSrcSet(Map<String, String> imgSrcSet) {
-        this.imgSrcSet = imgSrcSet;
-    }
-
-    private String originalTitle;
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public String getOriginalName() {
-        return originalName;
-    }
-
-    public void setOriginalName(String originalName) {
-        this.originalName = originalName;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getBrithYear() {
-        return brithYear;
-    }
-
-    public void setBrithYear(String brithYear) {
-        this.brithYear = brithYear;
-    }
-
-    public String getOriginalTitle() {
-        return originalTitle;
-    }
-
-    public void setOriginalTitle(String originalTitle) {
-        this.originalTitle = originalTitle;
-    }
-
-    public String getYear() {
-        return year;
-    }
-
-    public void setYear(String year) {
-        this.year = year;
-    }
-
-    private String year;
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-}
-public class Request {
-
-    public static String search(String request) throws IOException {
-        String url = "https://www.kinopoisk.ru/api/suggest/?query="+ request;
-//        System.out.println("Введите запрос");
-//        Scanner h= new Scanner(System.in);
-//        String name = h.nextLine();
-//        h.close();
-
-
-        URL obj = new URL(url);
-        HttpURLConnection connection = (HttpURLConnection) obj.openConnection();
-
+        //headers
         connection.setRequestProperty("x-requested-with", "XMLHttpRequest");
         connection.setRequestProperty("authority", "www.kinopoisk.ru");
         connection.setRequestProperty("accept", "application/json");
@@ -131,7 +32,6 @@ public class Request {
         connection.setRequestProperty("content-type", "application/json");
         connection.setRequestProperty("sec-fetch-site", "same-origin");
         connection.setRequestProperty("sec-fetch-mode", "cors");
-        //connection.setRequestProperty("accept-encoding", "gzip, deflate, br");
         connection.setRequestProperty("accept-language", "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7");
         connection.setRequestProperty("referer", "https://www.kinopoisk.ru/");
 
@@ -147,13 +47,33 @@ public class Request {
         in.close();
 
         String result = response.toString();
-       // System.out.println(result);
-        Gson gson = new Gson();
 
-        Type type = new TypeToken<List<Person>>(){}.getType();
-        List<Person> person = gson.fromJson(result, type);
-        System.out.println(person);
-        return result;
+        Type type = new TypeToken<List<FilmOrPerson>>(){}.getType();
 
+        List<FilmOrPerson> filmOrPersonList = gson.fromJson(result, type);
+        List<String> namesAndTitles = new ArrayList<>();
+
+        int i = 0;
+        for (FilmOrPerson obj : filmOrPersonList) {
+            switch (obj.getType()) {
+                case "person":
+                    namesAndTitles.add(namesAndTitles.size() - i, obj.getName());
+                    break;
+                case "film":
+                    namesAndTitles.add(obj.getTitle() + " (" + obj.getYear() + ")");
+                    break;
+                case "tvSeries":
+                    namesAndTitles.add(obj.getTitle() + " (" + obj.getYearsRange() + ")");
+                    break;
+            }
+            i++;
+        }
+
+        String resultList = String.join("\n", namesAndTitles);
+        resultList = resultList.replaceAll("&nbsp;"," ");
+        resultList = resultList.replaceAll("&#38;","&");
+        resultList = resultList.replaceAll("&ndash;","-");
+
+        return resultList;
     }
 }
