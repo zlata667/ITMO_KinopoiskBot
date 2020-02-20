@@ -22,7 +22,7 @@ public class Bot extends TelegramLongPollingBot {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        sendMsg(update.getMessage().getChatId().toString(), result);
+        sendMsg(update.getMessage().getChatId().toString(), "Результаты поиска:\n\n" + result);
     }
 
     private synchronized void sendMsg(String chatId, String s) {

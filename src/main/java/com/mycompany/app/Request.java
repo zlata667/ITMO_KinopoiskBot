@@ -48,16 +48,21 @@ class Request {
 
         String result = response.toString();
 
+        if (result.length() == 2) {
+            return "Нет результатов";
+        }
+
         Type type = new TypeToken<List<FilmOrPerson>>(){}.getType();
 
         List<FilmOrPerson> filmOrPersonList = gson.fromJson(result, type);
+
         List<String> namesAndTitles = new ArrayList<>();
 
         int i = 0;
         for (FilmOrPerson obj : filmOrPersonList) {
             switch (obj.getType()) {
                 case "person":
-                    namesAndTitles.add(namesAndTitles.size() - i, obj.getName());
+                    namesAndTitles.add(namesAndTitles.size() - i, obj.getOriginalName());
                     break;
                 case "film":
                     namesAndTitles.add(obj.getTitle() + " (" + obj.getYear() + ")");
@@ -73,6 +78,7 @@ class Request {
         resultList = resultList.replaceAll("&nbsp;"," ");
         resultList = resultList.replaceAll("&#38;","&");
         resultList = resultList.replaceAll("&ndash;","-");
+
 
         return resultList;
     }
