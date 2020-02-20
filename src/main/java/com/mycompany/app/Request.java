@@ -7,12 +7,14 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 class Request {
+    static List<FilmOrPerson> filmOrPersonList;
 
     static String search(String request) throws IOException {
 
@@ -54,7 +56,7 @@ class Request {
 
         Type type = new TypeToken<List<FilmOrPerson>>(){}.getType();
 
-        List<FilmOrPerson> filmOrPersonList = gson.fromJson(result, type);
+        filmOrPersonList = gson.fromJson(result, type);
 
         List<String> namesAndTitles = new ArrayList<>();
 
@@ -62,23 +64,25 @@ class Request {
         for (FilmOrPerson obj : filmOrPersonList) {
             switch (obj.getType()) {
                 case "person":
-                    namesAndTitles.add(namesAndTitles.size() - i, obj.getOriginalName());
+                    namesAndTitles.add(namesAndTitles.size() - i,
+                            obj.getName() + " \uD83D\uDC64" + " /subscribe" + obj.getId());
                     break;
                 case "film":
-                    namesAndTitles.add(obj.getTitle() + " (" + obj.getYear() + ")");
+                    namesAndTitles.add(obj.getTitle() + " (" + obj.getYear() + ") \uD83C\uDFAC /subscribe" + obj.getId());
                     break;
                 case "tvSeries":
-                    namesAndTitles.add(obj.getTitle() + " (" + obj.getYearsRange() + ")");
+                    namesAndTitles.add(obj.getTitle() + " (" + obj.getYearsRange() + ")" + " \uD83C\uDFAC" + " /subscribe" + obj.getId());
                     break;
             }
             i++;
         }
 
+
+
         String resultList = String.join("\n", namesAndTitles);
         resultList = resultList.replaceAll("&nbsp;"," ");
         resultList = resultList.replaceAll("&#38;","&");
         resultList = resultList.replaceAll("&ndash;","-");
-
 
         return resultList;
     }
