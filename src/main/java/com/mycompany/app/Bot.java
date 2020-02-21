@@ -16,7 +16,7 @@ public class Bot extends TelegramLongPollingBot {
     private static final String BOT_TOKEN = "983197607:AAF2W3iyYyoFOSh8zm4BvDALGtmHyz7C8H4";
 
     private String result = null;
-    private Map<String, List<String>> subscribeList = new HashMap<String, List<String>>();
+    private Map<String, List<FilmOrPerson>> subscribeList = new HashMap<>();
     private List<String> subscribeNames = new ArrayList<>();
 
     @Override
@@ -85,11 +85,14 @@ public class Bot extends TelegramLongPollingBot {
 
     private void check(String chatId, String id){
         if (subscribeList.containsKey(chatId)) {
-            if (subscribeList.get(chatId).toString().contains(id)) {
-                sendMsg(chatId, "Вы уже подписаны на " + getName(id));
-            } else {
-                confirm(chatId, id);//передаем id для подтверждения
+            for (FilmOrPerson fpObject : subscribeList.get(chatId)){
+                if (fpObject.getId().equals(id)){
+                    sendMsg(chatId, "Вы уже подписаны на " + getName(id));
+                    return;
+                }
             }
+            confirm(chatId, id);//передаем id для подтверждения
+
 
         } else {
             subscribeList.put(chatId, new ArrayList<>());
@@ -98,8 +101,9 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     private void subscribe(String chatId, String id) {
-
-        subscribeList.get(chatId).add(id);
+        FilmOrPerson newFilmOrPerson = new FilmOrPerson();
+        subscribeList.get(chatId).add(newFilmOrPerson);
+        newFilmOrPerson.setId(id);
         subscribeNames.add(getName(id));
         sendMsg(chatId, "Вы подписались на " + getName(id));
         sendMsg(chatId, "Ваши подписки: " + subscribeNames);
