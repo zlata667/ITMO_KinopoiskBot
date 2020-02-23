@@ -12,6 +12,8 @@ import java.util.*;
 
 public class Bot extends TelegramLongPollingBot {
 
+    //private static final String BOT_NAME = "Kinopoisk_Bot";
+    //private static final String BOT_TOKEN = "983197607:AAF2W3iyYyoFOSh8zm4BvDALGtmHyz7C8H4";
     private static final String BOT_NAME = "TestBot";
     private static final String BOT_TOKEN = "1066474013:AAHJeh_0KbJrc3aoym_sDPDmDKWzsUfDOiU";
 
