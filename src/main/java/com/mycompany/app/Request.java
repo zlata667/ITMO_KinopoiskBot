@@ -2,21 +2,22 @@ package com.mycompany.app;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 class Request {
-    static List<FilmOrPerson> filmOrPersonList;
 
-    static String search(String request) throws IOException {
+    static Map<String, List<FilmOrPerson>> filmOrPersonResultMap = new HashMap<>();
+
+    static String search(String request, String chatId) throws IOException {
 
         request = URLEncoder.encode(request);// кодируем на случай, если поиск на русском языке
 
@@ -54,36 +55,64 @@ class Request {
             return "Нет результатов";
         }
 
-        Type type = new TypeToken<List<FilmOrPerson>>(){}.getType();
+        List<FilmOrPerson> filmOrPersonList = gson.fromJson(result, new TypeToken<List<FilmOrPerson>>(){}.getType());
 
-        filmOrPersonList = gson.fromJson(result, type);
-
-        List<String> namesAndTitles = new ArrayList<>();
-
-        int i = 0;
-        for (FilmOrPerson obj : filmOrPersonList) {
-            switch (obj.getType()) {
-                case "person":
-                    namesAndTitles.add(namesAndTitles.size() - i,
-                            obj.getName() + " \uD83D\uDC64" + " /subscribe" + obj.getId());
-                    break;
-                case "film":
-                    namesAndTitles.add(obj.getTitle() + " (" + obj.getYear() + ") \uD83C\uDFAC /subscribe" + obj.getId());
-                    break;
-                case "tvSeries":
-                    namesAndTitles.add(obj.getTitle() + " (" + obj.getYearsRange() + ")" + " \uD83C\uDFAC" + " /subscribe" + obj.getId());
-                    break;
-            }
-            i++;
+        if (filmOrPersonResultMap.containsKey(chatId)){
+            filmOrPersonResultMap.get(chatId).clear();
+            filmOrPersonResultMap.get(chatId).addAll(filmOrPersonList);
+        } else{
+            filmOrPersonResultMap.put(chatId, new ArrayList<>());
+            filmOrPersonResultMap.get(chatId).addAll(filmOrPersonList);
         }
-
-
-
-        String resultList = String.join("\n", namesAndTitles);
-        resultList = resultList.replaceAll("&nbsp;"," ");
-        resultList = resultList.replaceAll("&#38;","&");
-        resultList = resultList.replaceAll("&ndash;","-");
-
-        return resultList;
+        return printResult(filmOrPersonResultMap.get(chatId), chatId);
     }
+
+    private static String printResult(List<FilmOrPerson> resultList, String chatId){
+
+        Map<String, List<String>> namesAndTitles = new HashMap<>();
+        List<FilmOrPerson> subscribesFotChatId = Bot.subscribeList.get(chatId); // подписки конкретного пользователя;
+
+        if (Bot.subscribeList.containsKey(chatId)){
+            namesAndTitles.put(chatId, new ArrayList<>());
+            for (int i = 0; i < resultList.size(); i++) {
+                int count = 0;
+                for (FilmOrPerson filmOrPerson : subscribesFotChatId) {
+                    if (resultList.get(i).getId().equals(filmOrPerson.getId())) {
+                        FilmOrPerson res = resultList.get(i);
+                        addNames(namesAndTitles.get(chatId), "/unsubscribe", res, res.getType(), i);
+                        count++;
+                    }
+                }
+                if (count == 0){
+                    FilmOrPerson res = resultList.get(i);
+                    addNames(namesAndTitles.get(chatId), "/subscribe", res, res.getType(), i);
+                }
+
+            }
+        } else{
+            namesAndTitles.put(chatId, new ArrayList<>());
+            for (int j = 0; j < resultList.size(); j++) {
+                FilmOrPerson res = resultList.get(j);
+                addNames(namesAndTitles.get(chatId), "/subscribe", res, res.getType(), j);
+            }
+        }
+        return Bot.toNormalString(String.join("\n", namesAndTitles.get(chatId)));
+    }
+
+    private static void addNames(List<String> namesList, String actionType, FilmOrPerson elem,
+                                 String objectType, int index){
+        switch (objectType){
+            case "person":
+                namesList.add(namesList.size() - index, elem.getName() + " \uD83D\uDC64 "
+                        + actionType + elem.getId());
+                break;
+            case "film":
+                namesList.add(elem.getTitle() + " (" + elem.getYear() + ") \uD83C\uDFAC " + actionType + elem.getId());
+                break;
+            case "tvSeries":
+                namesList.add(elem.getTitle() + " (" + elem.getYearsRange() + ")" + " \uD83C\uDFAC " + actionType + elem.getId());
+                break;
+        }
+    }
+
 }
