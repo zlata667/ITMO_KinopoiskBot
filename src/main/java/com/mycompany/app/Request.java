@@ -3,12 +3,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.ProtocolException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -17,7 +15,44 @@ class Request {
 
     static Map<String, List<FilmOrPerson>> filmOrPersonResultMap = new HashMap<>();
 
-    static String search(String request, String chatId) throws IOException {
+    static String searchFilmography(String chatId, String personId) throws IOException {
+
+        String url = "https://www.kinopoisk.ru/api/person-filmography/?id=" + personId; //на вход id актера
+
+        URL obj = new URL(url);
+        HttpURLConnection connection = (HttpURLConnection) obj.openConnection();
+
+        connectionSettings(connection);
+        connection.setRequestProperty("referer", "https://www.kinopoisk.ru/name/" + personId + "/"); // тут в заголовке используется id актера
+
+        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+        String inputLine;
+        StringBuilder response = new StringBuilder();
+
+        while ((inputLine = in.readLine()) != null) {
+            response.append(inputLine);
+        }
+        in.close();
+
+        Gson gson = new Gson();
+        Film film = gson.fromJson(response.toString(), Film.class);
+        List<FilmDetails> filmDetails = film.getFilmography();
+
+        return generateRandomFilm(chatId, filmDetails);//возвращает список фильмов с деталями
+    }
+
+    static String generateRandomFilm(String chatId, List<FilmDetails> filmography){
+
+        Random random = new Random();
+        int i = random.nextInt(filmography.size());
+        FilmDetails film = filmography.get(i);
+        String filmTitle = film.getTitle();
+        String filmYear = film.getYear();
+        String imageUrl = "https:" + film.getPosterBaseUrl() + "/orig";
+        return filmTitle + " " + filmYear + " " + imageUrl;
+    }
+
+    static String searchPersonOrFilm(String request, String chatId) throws IOException {
 
         request = URLEncoder.encode(request);// кодируем на случай, если поиск на русском языке
 
@@ -27,18 +62,8 @@ class Request {
 
         HttpURLConnection connection = (HttpURLConnection) urlObj.openConnection();
 
-        //headers
-        connection.setRequestProperty("x-requested-with", "XMLHttpRequest");
-        connection.setRequestProperty("authority", "www.kinopoisk.ru");
-        connection.setRequestProperty("accept", "application/json");
-        connection.setRequestProperty("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36");
-        connection.setRequestProperty("content-type", "application/json");
-        connection.setRequestProperty("sec-fetch-site", "same-origin");
-        connection.setRequestProperty("sec-fetch-mode", "cors");
-        connection.setRequestProperty("accept-language", "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7");
+        connectionSettings(connection);
         connection.setRequestProperty("referer", "https://www.kinopoisk.ru/");
-
-        connection.setRequestMethod("GET");
 
         BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
         String inputLine;
@@ -113,6 +138,20 @@ class Request {
                 namesList.add(elem.getTitle() + " (" + elem.getYearsRange() + ")" + " \uD83C\uDFAC " + actionType + elem.getId());
                 break;
         }
+    }
+
+    private static void connectionSettings(HttpURLConnection connection) throws ProtocolException {
+        connection.setRequestProperty("x-requested-with", "XMLHttpRequest");
+        connection.setRequestProperty("authority", "www.kinopoisk.ru");
+        connection.setRequestProperty("accept", "application/json");
+        connection.setRequestProperty("user-agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36");
+        connection.setRequestProperty("content-type", "application/json");
+        connection.setRequestProperty("sec-fetch-site", "same-origin");
+        connection.setRequestProperty("sec-fetch-mode", "cors");
+        connection.setRequestProperty("accept-language", "ru-RU");
+
+        connection.setRequestMethod("GET");
     }
 
 }

@@ -63,7 +63,7 @@ public class Bot extends TelegramLongPollingBot {
                 checkUnsubscribe(chatId, id);
             } else {
                 try {
-                    result = Request.search(message, chatId);
+                    result = Request.searchPersonOrFilm(message, chatId);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -182,6 +182,12 @@ public class Bot extends TelegramLongPollingBot {
         subscribeNames.get(chatId).add(getName(id, chatId));
         sendMsg(chatId, "Вы подписались на " + getName(id, chatId));
         sendMsg(chatId, "Ваши подписки: " + subscribeNames.get(chatId).toString());
+
+        try {
+            sendMsg(chatId, Request.searchFilmography(chatId, id));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 

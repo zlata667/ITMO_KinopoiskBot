@@ -29,8 +29,10 @@ public class App{
             TelegramBotsApi telegram = new TelegramBotsApi();
 
             DefaultBotOptions options = ApiContext.getInstance(DefaultBotOptions.class);
-            options.setProxyHost("49.12.0.103");
-            options.setProxyPort(10510);
+            options.setProxyHost("51.158.104.249");
+            options.setProxyPort(1080);
+            //51.158.104.249:1080
+            //49.12.0.103:10510
             //Select proxy type: [HTTP|SOCKS4|SOCKS5] (default: NO_PROXY)
             options.setProxyType(DefaultBotOptions.ProxyType.SOCKS5);
 
