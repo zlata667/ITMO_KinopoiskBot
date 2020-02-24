@@ -1,5 +1,6 @@
 package com.mycompany.app;
 
+import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
@@ -25,6 +26,20 @@ public class Bot extends TelegramLongPollingBot {
     private List<InlineKeyboardButton> keyboardButtonsRow = new ArrayList<>();
     private List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
 
+
+    public Bot(DefaultBotOptions options) {
+        super(options);
+    }
+
+    @Override
+    public String getBotUsername() {
+        return BOT_NAME;
+    }
+
+    @Override
+    public String getBotToken() {
+        return BOT_TOKEN;
+    }
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -195,16 +210,6 @@ public class Bot extends TelegramLongPollingBot {
             }
         }
         return null;
-    }
-
-    @Override
-    public String getBotUsername() {
-        return BOT_NAME;
-    }
-
-    @Override
-    public String getBotToken() {
-        return BOT_TOKEN;
     }
 
     static String toNormalString(String str){
