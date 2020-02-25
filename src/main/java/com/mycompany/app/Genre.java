@@ -12,20 +12,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
 
-class FGenre{
-    public List<Info> getItemsInfo() {
-        return itemsInfo;
-    }
 
-    private List<Info> itemsInfo;
-}
-class Info{
-    public Map<String, Object> getCoreData() {
-        return coreData;
-    }
 
-    private Map<String, Object> coreData;
-}
 
 public class Genre {
     private static String Input(){
