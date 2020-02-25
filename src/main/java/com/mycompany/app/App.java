@@ -5,24 +5,20 @@ import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.meta.ApiContext;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
+import sun.plugin2.message.Message;
 
+import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class App{
 
-    public static void main( String[] args )
-    {
-//
-//        BasicConfigurator.configure();
-//        ApiContextInitializer.init();
-//        TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
-//        try {
-//            telegramBotsApi.registerBot(new Bot());
-//        } catch (TelegramApiRequestException e) {
-//            e.printStackTrace();
-//        }
-
+    public static void main( String[] args ) {
         try {
             BasicConfigurator.configure();
             ApiContextInitializer.init();
@@ -35,11 +31,18 @@ public class App{
             //49.12.0.103:10510
             //Select proxy type: [HTTP|SOCKS4|SOCKS5] (default: NO_PROXY)
             options.setProxyType(DefaultBotOptions.ProxyType.SOCKS5);
-
-            telegram.registerBot(new Bot(options));
+            Bot bot = new Bot(options);
+            telegram.registerBot(bot);
         } catch (TelegramApiRequestException e) {
             e.printStackTrace();
         }
+
+        Timer time = new Timer();
+        ScheduledTask st = new ScheduledTask();
+        time.schedule(st, 0, 60000); // Каждую минуту приходят фильмы по подпискам
+
+
     }
+
 
 }

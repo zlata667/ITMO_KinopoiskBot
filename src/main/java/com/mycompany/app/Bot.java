@@ -11,6 +11,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.io.IOException;
 import java.util.*;
 
+
 public class Bot extends TelegramLongPollingBot {
 
     //private static final String BOT_NAME = "Kinopoisk_Bot";
@@ -26,8 +27,7 @@ public class Bot extends TelegramLongPollingBot {
     private List<InlineKeyboardButton> keyboardButtonsRow = new ArrayList<>();
     private List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
 
-
-    public Bot(DefaultBotOptions options) {
+    Bot(DefaultBotOptions options) {
         super(options);
     }
 
@@ -48,6 +48,15 @@ public class Bot extends TelegramLongPollingBot {
             String message = update.getMessage().getText();
             String chatId = update.getMessage().getChatId().toString();
 
+            if (message.startsWith("\"")){
+                try {
+                    result = Request.searchPersonOrFilm(message, chatId);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                sendMsg(chatId, String.format("Результаты поиска:\n\n%s", result));
+                return;
+            }
             if (message.contains("/start")){
                 sendMsg(chatId, "Привет!\n Для того, чтобы начать пользоваться ботом, введи имя актера или название фильма.");
                 return;
@@ -55,7 +64,11 @@ public class Bot extends TelegramLongPollingBot {
 
             if (message.contains("/subscribe")){
                 String id = message.replace("/subscribe", "");
-                checkSubscribe(chatId, id);
+                try {
+                    checkSubscribe(chatId, id);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 return;
             }
             if (message.contains("/unsubscribe")){
@@ -84,9 +97,7 @@ public class Bot extends TelegramLongPollingBot {
 
             String data = update.getCallbackQuery().getData();
 
-            if (data.equals("no")){
-                sendMsg(chatId, "Окей");
-            } else if (data.contains("sub")){
+            if (data.contains("sub")){
                 subscribe(chatId, data.replace("sub", ""));
             } else {
                 unsubscribe(chatId, data.replace("un", ""));
@@ -97,6 +108,7 @@ public class Bot extends TelegramLongPollingBot {
     private synchronized void sendMsg(String chatId, String s) {
         SendMessage sendMes = new SendMessage();
         sendMes.enableMarkdown(true);
+        sendMes.enableWebPagePreview();
         sendMes.setChatId(chatId);
         sendMes.setText(s);
         try {
@@ -148,7 +160,15 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    private void checkSubscribe(String chatId, String id){
+    private void checkSubscribe(String chatId, String id) throws IOException {
+
+        if (getName(id, chatId) == null){//заменить с бд
+            return;
+        }
+        if (getType(id, chatId).equals("person") && Request.searchFilmography(chatId, id) == null){
+            sendMsg(chatId, "К сожалению, фильмография " + getName(id, chatId) + " на кинопоиске в данный момент пуста.");
+            return;
+        }
         if (subscribeList.containsKey(chatId)) {
             for (FilmOrPerson fpObject : subscribeList.get(chatId)){
                 if (fpObject.getId().equals(id)){
@@ -179,15 +199,12 @@ public class Bot extends TelegramLongPollingBot {
         FilmOrPerson newFilmOrPerson = new FilmOrPerson();
         subscribeList.get(chatId).add(newFilmOrPerson);
         newFilmOrPerson.setId(id);
+        newFilmOrPerson.setName(getName(id, chatId));
+        newFilmOrPerson.setType(getType(id, chatId));
         subscribeNames.get(chatId).add(getName(id, chatId));
         sendMsg(chatId, "Вы подписались на " + getName(id, chatId));
         sendMsg(chatId, "Ваши подписки: " + subscribeNames.get(chatId).toString());
 
-        try {
-            sendMsg(chatId, Request.searchFilmography(chatId, id));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
     }
 
@@ -207,6 +224,10 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     private String getName(String id, String chatId){
+        if (Request.filmOrPersonResultMap.isEmpty()){
+            sendMsg(chatId, "Не найдено");
+            return null;
+        }
         for (FilmOrPerson filmOrPerson : Request.filmOrPersonResultMap.get(chatId)){
             if (filmOrPerson.getId().equals(id)){
                 if ("person".equals(filmOrPerson.getType())) {
@@ -218,9 +239,19 @@ public class Bot extends TelegramLongPollingBot {
         return null;
     }
 
+    private String getType(String id, String chatId){
+        for (FilmOrPerson filmOrPerson : Request.filmOrPersonResultMap.get(chatId)){
+            if (filmOrPerson.getId().equals(id)){
+                return filmOrPerson.getType();
+            }
+        }
+        return null;
+    }
+
     static String toNormalString(String str){
         str = str.replaceAll("&nbsp;"," ").replaceAll("&#38;","&")
-                .replaceAll("&ndash;","-").replaceAll("&#237;", "i");
+                .replaceAll("&ndash;","-").replaceAll("&#237;", "i")
+                .replaceAll("&eacute;", "e");
         return str;
     }
 }

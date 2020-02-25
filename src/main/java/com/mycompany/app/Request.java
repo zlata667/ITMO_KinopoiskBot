@@ -38,6 +38,8 @@ class Request {
         Film film = gson.fromJson(response.toString(), Film.class);
         List<FilmDetails> filmDetails = film.getFilmography();
 
+        if (filmDetails.isEmpty()) return null;
+
         return generateRandomFilm(chatId, filmDetails);//возвращает список фильмов с деталями
     }
 
@@ -46,10 +48,33 @@ class Request {
         Random random = new Random();
         int i = random.nextInt(filmography.size());
         FilmDetails film = filmography.get(i);
+        int filmId = film.getId();
         String filmTitle = film.getTitle();
+        String originalTitle = film.getOriginalTitle();
         String filmYear = film.getYear();
-        String imageUrl = "https:" + film.getPosterBaseUrl() + "/orig";
-        return filmTitle + " " + filmYear + " " + imageUrl;
+        String genre = film.getFirstGenre();
+        String filmUrl = "www.kinopoisk.ru/film/" + filmId + "/";
+        List<String> filmCountries = film.getCountries();
+
+        Map<String, String> ratingKP = ((Map<String, String>) film.getRatings().get("kp"));
+        String ratingValue = ratingKP.get("value");
+        if (ratingValue == null){
+            ratingValue = "Отсутствует";
+        }
+        String result;
+        if (originalTitle == null){
+            result = filmTitle + " (" + filmYear
+                    + ")\nЖанр: " + genre
+                    + "\nСтрана: " + filmCountries.toString()
+                    + "\nРейтинг кинопоиска: " + ratingValue + "\n" + filmUrl;
+        } else {
+            result = filmTitle + " (" + originalTitle + ", " + filmYear
+                    + ")\nЖанр: " + genre
+                    + "\nСтрана: " + filmCountries.toString()
+                    + "\nРейтинг кинопоиска: " + ratingValue + "\n" + filmUrl;
+        }
+
+        return result;
     }
 
     static String searchPersonOrFilm(String request, String chatId) throws IOException {
@@ -92,7 +117,7 @@ class Request {
         return printResult(filmOrPersonResultMap.get(chatId), chatId);
     }
 
-    private static String printResult(List<FilmOrPerson> resultList, String chatId){
+    private static String printResult(List<FilmOrPerson> resultList, String chatId) throws IOException {
 
         Map<String, List<String>> namesAndTitles = new HashMap<>();
         List<FilmOrPerson> subscribesFotChatId = Bot.subscribeList.get(chatId); // подписки конкретного пользователя;
@@ -102,15 +127,16 @@ class Request {
             for (int i = 0; i < resultList.size(); i++) {
                 int count = 0;
                 for (FilmOrPerson filmOrPerson : subscribesFotChatId) {
+
                     if (resultList.get(i).getId().equals(filmOrPerson.getId())) {
                         FilmOrPerson res = resultList.get(i);
-                        addNames(namesAndTitles.get(chatId), "/unsubscribe", res, res.getType(), i);
+                        addNames(namesAndTitles.get(chatId), "/unsubscribe", res, res.getType(), i, res.getId());
                         count++;
                     }
                 }
                 if (count == 0){
                     FilmOrPerson res = resultList.get(i);
-                    addNames(namesAndTitles.get(chatId), "/subscribe", res, res.getType(), i);
+                    addNames(namesAndTitles.get(chatId), "/subscribe", res, res.getType(), i, res.getId());
                 }
 
             }
@@ -118,24 +144,24 @@ class Request {
             namesAndTitles.put(chatId, new ArrayList<>());
             for (int j = 0; j < resultList.size(); j++) {
                 FilmOrPerson res = resultList.get(j);
-                addNames(namesAndTitles.get(chatId), "/subscribe", res, res.getType(), j);
+                addNames(namesAndTitles.get(chatId), "/subscribe", res, res.getType(), j, res.getId());
             }
         }
         return Bot.toNormalString(String.join("\n", namesAndTitles.get(chatId)));
     }
 
     private static void addNames(List<String> namesList, String actionType, FilmOrPerson elem,
-                                 String objectType, int index){
+                                 String objectType, int index, String id){
         switch (objectType){
             case "person":
                 namesList.add(namesList.size() - index, elem.getName() + " \uD83D\uDC64 "
-                        + actionType + elem.getId());
+                        + actionType + id);
                 break;
             case "film":
-                namesList.add(elem.getTitle() + " (" + elem.getYear() + ") \uD83C\uDFAC " + actionType + elem.getId());
+                namesList.add(elem.getTitle() + " (" + elem.getYear() + ") \uD83C\uDFAC " + actionType + id);
                 break;
             case "tvSeries":
-                namesList.add(elem.getTitle() + " (" + elem.getYearsRange() + ")" + " \uD83C\uDFAC " + actionType + elem.getId());
+                namesList.add(elem.getTitle() + " (" + elem.getYearsRange() + ")" + " \uD83C\uDFAC " + actionType + id);
                 break;
         }
     }

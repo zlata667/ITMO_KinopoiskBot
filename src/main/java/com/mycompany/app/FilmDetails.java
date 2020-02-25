@@ -18,6 +18,14 @@ class FilmDetails {
     private Map<String,String> contextData;
     private String posterBaseUrl;
 
+    public Map<String, Object> getRatings() {
+        return ratings;
+    }
+
+    public void setRatings(Map<String, Object> ratings) {
+        this.ratings = ratings;
+    }
+
     public String getPosterBaseUrl() {
         return posterBaseUrl;
     }
@@ -106,11 +114,5 @@ class FilmDetails {
         this.firstGenre = firstGenre;
     }
 
-    public Map<String, Object> getRatings() {
-        return ratings;
-    }
 
-    public void setRatings(Map<String, Object> ratings) {
-        this.ratings = ratings;
-    }
 }
