@@ -170,6 +170,7 @@ public class Bot extends TelegramLongPollingBot {
     private void checkSubscribe(String chatId, String id) throws IOException {
 
         if (getName(id, chatId) == null){//заменить с бд
+            sendMsg(chatId, "Не найдено");
             return;
         }
         if (Request.searchFilmography(id) == null){
@@ -193,6 +194,10 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     private void checkUnsubscribe(String chatId, String id){
+        if (getName(id, chatId) == null){//заменить с бд
+            sendMsg(chatId, "Не найдено");
+            return;
+        }
         for (FilmOrPerson fpObject : subscribeList.get(chatId)){
             if (fpObject.getId().equals(id)){
                 confirmUnsubscribe(chatId, id);
@@ -247,10 +252,10 @@ public class Bot extends TelegramLongPollingBot {
         return null;
     }
 
-    private String getGenre(String id, String chatId) throws IOException {
-        String genre = Request.searchGenre(chatId, id);
-        return genre;
-    }
+//    private String getGenre(String id, String chatId) throws IOException {
+//        String genre = Request.searchGenre(chatId, id);
+//        return genre;
+//    }
 
     static String toNormalString(String str){
         str = str.replaceAll("&nbsp;"," ").replaceAll("&#38;","&")
