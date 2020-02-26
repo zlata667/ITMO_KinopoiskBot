@@ -14,10 +14,10 @@ import java.util.*;
 
 public class Bot extends TelegramLongPollingBot {
 
-//    private static final String BOT_NAME = "Kinopoisk_Bot";
-//    private static final String BOT_TOKEN = "983197607:AAF2W3iyYyoFOSh8zm4BvDALGtmHyz7C8H4";
-    private static final String BOT_NAME = "TestBot";
-    private static final String BOT_TOKEN = "1066474013:AAHJeh_0KbJrc3aoym_sDPDmDKWzsUfDOiU";
+    private static final String BOT_NAME = "Kinopoisk_Bot";
+    private static final String BOT_TOKEN = "983197607:AAF2W3iyYyoFOSh8zm4BvDALGtmHyz7C8H4";
+//    private static final String BOT_NAME = "TestBot";
+ //   private static final String BOT_TOKEN = "1066474013:AAHJeh_0KbJrc3aoym_sDPDmDKWzsUfDOiU";
 
     private String result = null;
     static Map<String, List<FilmOrPerson>> subscribeList = new HashMap<>();
@@ -61,6 +61,13 @@ public class Bot extends TelegramLongPollingBot {
                 sendMsg(chatId, "Привет!\n Для того, чтобы начать пользоваться ботом, введи имя актера или фильма.");
                 return;
             }
+            if (message.contains("/info")){
+                sendMsg(chatId, "Это KinopoiskBot. \n" +
+                        "Для вас он может найти человека или фильм, у которых есть страница на сайте kinopoisk.ru. Для того, чтобы начать поиск, просто напишите ему имя актера или название фильма.\n" +
+                        "Если вы хотите получить случайный фильм или по выбранному жанру, напишите ему /random.\n" +
+                        "Также вы можете подписаться на любимого актера или режиссера и периодически получать фильмы с его участием в сообщения.");
+                return;
+            }
             if (message.contains("/random")){
                 RandomFromGenre.printGenres(chatId);
                 return;
@@ -84,8 +91,7 @@ public class Bot extends TelegramLongPollingBot {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                sendMsg(chatId, "Результаты поиска:\n\n" + result
-                        + "\n\nДля того, чтобы подписаться на получение фильмов, нажмите subscribe рядом с выбранной личностью.");
+                sendMsg(chatId, "Результаты поиска:\n\n" + result);
             }
 
             return;
@@ -146,7 +152,7 @@ public class Bot extends TelegramLongPollingBot {
         sendMes.enableMarkdown(true);
         sendMes.enableWebPagePreview();
         sendMes.setChatId(chatId);
-        sendMes.setText(s);
+        sendMes.setText(s + "\n/info");
         try {
             execute(sendMes);
         } catch (TelegramApiException e) {

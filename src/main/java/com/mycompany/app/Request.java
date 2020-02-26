@@ -49,7 +49,8 @@ class Request {
             filmOrPersonResultMap.put(chatId, new ArrayList<>());
             filmOrPersonResultMap.get(chatId).addAll(filmOrPersonList);
         }
-        return printResult(filmOrPersonResultMap.get(chatId), chatId);
+        return printResult(filmOrPersonResultMap.get(chatId), chatId)
+                + "\n\nДля того, чтобы подписаться на получение фильмов, нажмите subscribe рядом с выбранной личностью.";
     }
 
     private static String printResult(List<FilmOrPerson> resultList, String chatId) throws IOException {
