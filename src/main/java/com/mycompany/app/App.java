@@ -12,11 +12,11 @@ import sun.plugin2.message.Message;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class App{
+
+    static Bot bot;
 
     public static void main( String[] args ) {
         try {
@@ -25,22 +25,22 @@ public class App{
             TelegramBotsApi telegram = new TelegramBotsApi();
 
             DefaultBotOptions options = ApiContext.getInstance(DefaultBotOptions.class);
-            options.setProxyHost("51.158.104.249");
-            options.setProxyPort(1080);
+            options.setProxyHost("49.12.0.103");
+            options.setProxyPort(10510);
             //51.158.104.249:1080
             //49.12.0.103:10510
+            //213.136.89.190:53054
             //Select proxy type: [HTTP|SOCKS4|SOCKS5] (default: NO_PROXY)
             options.setProxyType(DefaultBotOptions.ProxyType.SOCKS5);
-            Bot bot = new Bot(options);
+            bot = new Bot(options);
             telegram.registerBot(bot);
         } catch (TelegramApiRequestException e) {
             e.printStackTrace();
         }
 
         Timer time = new Timer();
-        ScheduledTask st = new ScheduledTask();
-        time.schedule(st, 0, 60000); // Каждую минуту приходят фильмы по подпискам
-
+        ScheduledTask task = new ScheduledTask();
+        time.schedule(task, 0, 1 * 60000); // Каждую минуту приходят фильмы по подпискам
 
     }
 
