@@ -40,7 +40,7 @@ public class App{
 
         Timer time = new Timer();
         ScheduledTask task = new ScheduledTask();
-        time.schedule(task, 0, 1 * 60000); // Каждую минуту приходят фильмы по подпискам
+        time.schedule(task, 0, 3 * 60000);
 
     }
 

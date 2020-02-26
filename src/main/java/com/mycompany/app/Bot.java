@@ -61,6 +61,10 @@ public class Bot extends TelegramLongPollingBot {
                 sendMsg(chatId, "Привет!\n Для того, чтобы начать пользоваться ботом, введи имя актера или фильма.");
                 return;
             }
+            if (message.contains("/random")){
+                RandomFromGenre.printGenres(chatId);
+                return;
+            }
 
             if (message.contains("/subscribe")){
                 String id = message.replace("/subscribe", "");
@@ -84,29 +88,56 @@ public class Bot extends TelegramLongPollingBot {
                         + "\n\nДля того, чтобы подписаться на получение фильмов, нажмите subscribe рядом с выбранной личностью.");
             }
 
-        } else if (update.hasCallbackQuery()){
+            return;
+        }
+        if (update.hasCallbackQuery()){
             String chatId = update.getCallbackQuery().getMessage().getChatId().toString();
             int mesId = update.getCallbackQuery().getMessage().getMessageId();
 
             DeleteMessage deleteMessage = new DeleteMessage();
             deleteMessage.setChatId(chatId).setMessageId(mesId);
-            try {
-                execute(deleteMessage);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
 
             String data = update.getCallbackQuery().getData();
-
+            if (data.equals("no")){
+                try {
+                    execute(deleteMessage);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+                return;
+            }
             if (data.contains("sub")){
+                try {
+                    execute(deleteMessage);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
                 try {
                     subscribe(chatId, data.replace("sub", ""));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            } else {
-                unsubscribe(chatId, data.replace("un", ""));
+                return;
             }
+            if (data.contains("un")) {
+                try {
+                    execute(deleteMessage);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+                unsubscribe(chatId, data.replace("un", ""));
+            } else{
+                try {
+                    String film = RandomFromGenre.generateRandomFilmFromGenre(Request.searchFilmsFromGenre(data,"films"));
+                    sendMsg(chatId, "Фильм жанра " + data + ":\n" + toNormalString(film));
+
+                    String series = RandomFromGenre.generateRandomFilmFromGenre(Request.searchFilmsFromGenre(data,"serials"));
+                    sendMsg(chatId, "Сериал жанра " + data + ":\n" + toNormalString(series));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
         }
     }
 
@@ -169,14 +200,14 @@ public class Bot extends TelegramLongPollingBot {
 
     private void checkSubscribe(String chatId, String id) throws IOException {
 
-        if (getName(id, chatId) == null){//заменить с бд
-            sendMsg(chatId, "Не найдено");
-            return;
-        }
         if (Request.searchFilmography(id) == null){
+            sendMsg(chatId, "Вы ввели несуществующий id. Попробуйте воспользоваться поиском - введите имя актера или название фильма.");
+        }
+        if (Request.searchFilmography(id).getFilmography().isEmpty()){
             sendMsg(chatId, "К сожалению, фильмография " + getName(id, chatId) + " на кинопоиске в данный момент пуста.");
             return;
         }
+
         if (subscribeList.containsKey(chatId)) {
             for (FilmOrPerson fpObject : subscribeList.get(chatId)){
                 if (fpObject.getId().equals(id)){
@@ -242,20 +273,6 @@ public class Bot extends TelegramLongPollingBot {
         }
         return null;
     }
-
-    private String getType(String id, String chatId){
-        for (FilmOrPerson filmOrPerson : Request.filmOrPersonResultMap.get(chatId)){
-            if (filmOrPerson.getId().equals(id)){
-                return filmOrPerson.getType();
-            }
-        }
-        return null;
-    }
-
-//    private String getGenre(String id, String chatId) throws IOException {
-//        String genre = Request.searchGenre(chatId, id);
-//        return genre;
-//    }
 
     static String toNormalString(String str){
         str = str.replaceAll("&nbsp;"," ").replaceAll("&#38;","&")

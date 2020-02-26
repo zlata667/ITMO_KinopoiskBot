@@ -93,22 +93,24 @@ class Request {
         connectionSettings(connection);
         connection.setRequestProperty("referer", "https://www.kinopoisk.ru/name/" + personId + "/"); // тут в заголовке используется id актера
 
-        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-        String inputLine;
-        StringBuilder response = new StringBuilder();
+        StringBuilder response;
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+            String inputLine;
+            response = new StringBuilder();
 
-        while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine);
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+
+            Gson gson = new Gson();
+            Film film = gson.fromJson(response.toString(), Film.class);
+            return  film;
+
+        } catch (Exception e){
+            return null;
         }
-        in.close();
 
-        Gson gson = new Gson();
-        Film film = gson.fromJson(response.toString(), Film.class);
-        List<FilmDetails> filmography = film.getFilmography();
-
-        if (filmography.isEmpty()) return null;
-
-        return  film;
     }
 
     static String generateRandomFilmFromFilmography(Film filmInf){
@@ -149,130 +151,10 @@ class Request {
         return result;
     }
 
-    private static void addNames(List<String> namesList, String actionType, FilmOrPerson elem,
-                                 String objectType, int index, String id){
-        switch (objectType){
-            case "person":
-                namesList.add(namesList.size() - index, elem.getName() + " \uD83D\uDC64 "
-                        + actionType + id);
-                break;
-            case "film":
-                namesList.add(elem.getTitle() + " (" + elem.getYear() + ") \uD83C\uDFAC ");
-                break;
-            case "tvSeries":
-                namesList.add(elem.getTitle() + " (" + elem.getYearsRange() + ")" + " \uD83C\uDFAC ");
-                break;
-        }
-    }
+    static List<Info> searchFilmsFromGenre(String genreTitle, String type) throws IOException {
 
-    private static void connectionSettings(HttpURLConnection connection) throws ProtocolException {
-        connection.setRequestProperty("x-requested-with", "XMLHttpRequest");
-        connection.setRequestProperty("authority", "www.kinopoisk.ru");
-        connection.setRequestProperty("accept", "application/json");
-        connection.setRequestProperty("user-agent",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36");
-        connection.setRequestProperty("content-type", "application/json");
-        connection.setRequestProperty("sec-fetch-site", "same-origin");
-        connection.setRequestProperty("sec-fetch-mode", "cors");
-        connection.setRequestProperty("accept-language", "ru-RU");
-
-        connection.setRequestMethod("GET");
-    }
-
-
-//    static String searchGenre(String chatId, String filmId) throws IOException {
-//        String url = "https://widgets.kinopoisk.ru/discovery/api/trailers?params=" + filmId;
-//
-//        URL obj = new URL(url);
-//        HttpURLConnection connection = (HttpURLConnection) obj.openConnection();
-//        connectionSettings(connection);
-//        connection.setRequestProperty("referer", "https://www.kinopoisk.ru/film/"+ filmId +"/");
-//
-//        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-//        String inputLine;
-//        StringBuilder response = new StringBuilder();
-//
-//        while ((inputLine = in.readLine()) != null) {
-//            response.append(inputLine);
-//        }
-//        in.close();
-//
-//        Gson gson = new Gson();
-//        Object son = gson.fromJson(response.toString(), Object.class);
-//        Map<String, Map<String,Map<String,List<String>>>> id = (Map<String, Map<String,Map<String,List<String>>>>) son;
-//        List<String> filmGenres = id.get(filmId).get("film").get("genres");
-//
-//        return filmGenres.get(0);//получаем жанр фильма
-//    }
-//
-//
-//    static List<Info> searchFilmsFromGenre(String genreTitle, String type) throws IOException {
-//
-//        String genreId = null;
-//        String genreEngTitle = null;
-//        getGenreIdAndEngTitle(genreTitle, genreId, genreEngTitle);
-//
-//        String url = "https://www.kinopoisk.ru/lists/navigator/api/films/?exclude_viewed=0&genre="+genreId+"&page=1&quick_filters=" + type + "&sort=votes";
-//        URL obj = new URL(url);
-//        HttpURLConnection connection = (HttpURLConnection) obj.openConnection();
-//        connectionSettings(connection);
-//        connection.setRequestProperty("referer", "https://www.kinopoisk.ru/lists/navigator/"+genreEngTitle+"/?quick_filters=" + type);
-//
-//        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-//        String inputLine;
-//        StringBuilder response = new StringBuilder();
-//
-//        while ((inputLine = in.readLine()) != null) {
-//            response.append(inputLine);
-//        }
-//        in.close();
-//
-//        Gson gson = new Gson();
-//        FGenre genres = gson.fromJson(response.toString(), FGenre.class);
-//        List<Info> inf = genres.getItemsInfo();//список фильмов в виде объектов Info
-//
-//        return inf;
-//
-//    }
-//
-//    static String generateRandomFilmFromGenre(String chatId, List<Info> filmList){
-//
-//        Random random = new Random();
-//        int i = random.nextInt(filmList.size());
-//        Object film = filmList.get(i).getCoreData();
-//        Map<String, String> filmDetails = (Map<String, String>) film;
-//        String title = filmDetails.get("title");
-//        String originalTitle = filmDetails.get("originalTitle");
-//        String imageUrl = filmDetails.get("posterLink");
-//
-//        Map<String, Double> number = (Map<String, Double>)film;//для чисел. они почему все в этом типе оказались
-//        int year = number.get("year").intValue();
-//
-//        Map<String,Map<String, Map<String,String>>> ratings = (Map<String,Map<String, Map<String,String>>>)film;
-//        String rating = ratings.get("ratings").get("rating").get("value");
-//        Map<String,List<Map<String,String>>> g = (Map<String,List<Map<String,String>>>) film;
-//        List<String> genres = new ArrayList<String>();
-//
-//        for (int j = 0; j < g.get("genres").size(); j++){
-//            genres.add(g.get("genres").get(j).get("name"));
-//        }
-//
-//        String result;
-//        if (originalTitle == null){
-//            result = title + " (" + year
-//                    + ")\nЖанр: " + genres.toString()
-//                    + "\nРейтинг кинопоиска: " + rating + "\n" + imageUrl;
-//        } else {
-//            result = title + " (" + originalTitle + ", " + year
-//                    + ")\nЖанр: " + genres.toString()
-//                    + "\nРейтинг кинопоиска: " + rating + "\n" + imageUrl;
-//        }
-//
-//        return result;
-//    }
-
-
-    private static void getGenreIdAndEngTitle(String genreTitle, String genreId, String genreEngTitle){
+        String genreId;
+        String genreEngTitle;
 
         switch (genreTitle) {//перенести в бд
             case "комедия":
@@ -399,7 +281,64 @@ class Request {
                 genreId = "1751";
                 genreEngTitle = "ceremony";
                 break;
+            default:
+                genreId = "0";
+                genreEngTitle = "0";
         }
 
+        String url = "https://www.kinopoisk.ru/lists/navigator/api/films/?exclude_viewed=0&genre="+genreId+"&page=1&quick_filters=" + type + "&sort=votes";
+        URL obj = new URL(url);
+        HttpURLConnection connection = (HttpURLConnection) obj.openConnection();
+        connectionSettings(connection);
+        connection.setRequestProperty("referer", "https://www.kinopoisk.ru/lists/navigator/"+genreEngTitle+"/?quick_filters=" + type);
+
+        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+        String inputLine;
+        StringBuilder response = new StringBuilder();
+
+        while ((inputLine = in.readLine()) != null) {
+            response.append(inputLine);
+        }
+        in.close();
+
+        Gson gson = new Gson();
+        FGenre genres = gson.fromJson(response.toString(), FGenre.class);
+        List<Info> inf = genres.getItemsInfo();//список фильмов в виде объектов Info
+
+
+
+        return inf;
+
     }
+
+    private static void addNames(List<String> namesList, String actionType, FilmOrPerson elem,
+                                 String objectType, int index, String id){
+        switch (objectType){
+            case "person":
+                namesList.add(namesList.size() - index, elem.getName() + " \uD83D\uDC64 "
+                        + actionType + id);
+                break;
+            case "film":
+                namesList.add(elem.getTitle() + " (" + elem.getYear() + ") \uD83C\uDFAC " + "https://www.kinopoisk.ru/" + elem.getUrl());
+                break;
+            case "tvSeries":
+                namesList.add(elem.getTitle() + " (" + elem.getYearsRange() + ")" + " \uD83C\uDFAC ");
+                break;
+        }
+    }
+
+    private static void connectionSettings(HttpURLConnection connection) throws ProtocolException {
+        connection.setRequestProperty("x-requested-with", "XMLHttpRequest");
+        connection.setRequestProperty("authority", "www.kinopoisk.ru");
+        connection.setRequestProperty("accept", "application/json");
+        connection.setRequestProperty("user-agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36");
+        connection.setRequestProperty("content-type", "application/json");
+        connection.setRequestProperty("sec-fetch-site", "same-origin");
+        connection.setRequestProperty("sec-fetch-mode", "cors");
+        connection.setRequestProperty("accept-language", "ru-RU");
+
+        connection.setRequestMethod("GET");
+    }
+
 }
