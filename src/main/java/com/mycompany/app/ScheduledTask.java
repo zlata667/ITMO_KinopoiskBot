@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.*;
 
 public class ScheduledTask extends TimerTask {
-
     @Override
     public void run() {
         if (!Bot.subscribeList.isEmpty()) {

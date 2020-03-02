@@ -3,10 +3,15 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.*;
+import java.sql.*;
 import java.util.*;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.mysql.fabric.jdbc.FabricMySQLDriver;
+
+import javax.management.Query;
+import javax.xml.crypto.Data;
 
 class Request {
     static Map<String, List<FilmOrPerson>> filmOrPersonResultMap = new HashMap<>();
@@ -154,137 +159,28 @@ class Request {
 
     static List<Info> searchFilmsFromGenre(String genreTitle, String type) throws IOException {
 
-        String genreId;
-        String genreEngTitle;
+        String genreId = null;
+        String genreEngTitle = null;
 
-        switch (genreTitle) {//перенести в бд
-            case "комедия":
-                genreId = "6";
-                genreEngTitle = "comedy";
-                break;
-            case "мелодрама":
-                genreId = "7";
-                genreEngTitle = "romance";
-                break;
-            case "игра":
-                genreId = "27";
-                genreEngTitle = "game-show";
-                break;
-            case "мультфильм":
-                genreId = "14";
-                genreEngTitle = "animation";
-                break;
-            case "фантастика":
-                genreId = "2";
-                genreEngTitle = "sci-fi";
-                break;
-            case "приключения":
-                genreId = "10";
-                genreEngTitle = "adventure";
-                break;
-            case "детектив":
-                genreId = "17";
-                genreEngTitle = "mystery";
-                break;
-            case "семейный":
-                genreId = "11";
-                genreEngTitle = "family";
-                break;
-            case "ток-шоу":
-                genreId = "26";
-                genreEngTitle = "talk-show";
-                break;
-            case "фэнтези":
-                genreId = "5";
-                genreEngTitle = "fantasy";
-                break;
-            case "драма":
-                genreId = "8";
-                genreEngTitle = "drama";
-                break;
-            case "музыка":
-                genreId = "21";
-                genreEngTitle = "music";
-                break;
-            case "короткометражка":
-                genreId = "15";
-                genreEngTitle = "short";
-                break;
-            case "реальное ТВ":
-                genreId = "25";
-                genreEngTitle = "reality-tv";
-                break;
-            case "криминал":
-                genreId = "16";
-                genreEngTitle = "crime";
-                break;
-            case "аниме":
-                genreId = "1750";
-                genreEngTitle = "anime";
-                break;
-            case "военный":
-                genreId = "19";
-                genreEngTitle = "war";
-                break;
-            case "боевик":
-                genreId = "3";
-                genreEngTitle = "action";
-                break;
-            case "биография":
-                genreId = "22";
-                genreEngTitle = "biography";
-                break;
-            case "история":
-                genreId = "23";
-                genreEngTitle = "history";
-                break;
-            case "документальный":
-                genreId = "12";
-                genreEngTitle = "documentary";
-                break;
-            case "вестерн":
-                genreId = "13";
-                genreEngTitle = "western";
-                break;
-            case "триллер":
-                genreId = "4";
-                genreEngTitle = "thriller";
-                break;
-            case "ужасы":
-                genreId = "1";
-                genreEngTitle = "horror";
-                break;
-            case "мюзикл":
-                genreId = "9";
-                genreEngTitle = "musical";
-                break;
-            case "детский":
-                genreId = "456";
-                genreEngTitle = "children";
-                break;
-            case "концерт":
-                genreId = "1747";
-                genreEngTitle = "concert";
-                break;
-            case "новости":
-                genreId = "28";
-                genreEngTitle = "news";
-                break;
-            case "спорт":
-                genreId = "24";
-                genreEngTitle = "sport";
-                break;
-            case "фильм-нуар":
-                genreId = "18";
-                genreEngTitle = "film-noir";
-                break;
-            case "церемония":
-                genreId = "1751";
-                genreEngTitle = "ceremony";
-                break;
-            default:
-                genreId = "0";
-                genreEngTitle = "0";
+        Connection conn;
+        try {
+
+            Driver driver = new FabricMySQLDriver();
+            DriverManager.registerDriver(driver);
+            conn = DriverManager.getConnection("jdbc:mysql://remotemysql.com:3306/wssmTKXCex", "wssmTKXCex", "WhxmR8YpfY");
+
+            ResultSet resultSet;
+            String query = "select * from Genres where rusTitle = ?";
+            PreparedStatement preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setString(1, genreTitle);
+            resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            genreId = resultSet.getString("id");
+            genreEngTitle = resultSet.getString("engTitle");
+            conn.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
         String url = "https://www.kinopoisk.ru/lists/navigator/api/films/?exclude_viewed=0&genre="+genreId+"&page=1&quick_filters=" + type + "&sort=votes";
