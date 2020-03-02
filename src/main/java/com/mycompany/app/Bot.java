@@ -21,8 +21,6 @@ public class Bot extends TelegramLongPollingBot {
  //   private static final String BOT_TOKEN = "1066474013:AAHJeh_0KbJrc3aoym_sDPDmDKWzsUfDOiU";
 
     private String result = null;
-    static Map<String, List<FilmOrPerson>> subscribeList = new HashMap<>();
-    private Map<String, List<String>> subscribeNames = new HashMap<>();
 
     private InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
     private List<InlineKeyboardButton> keyboardButtonsRow = new ArrayList<>();
@@ -52,7 +50,7 @@ public class Bot extends TelegramLongPollingBot {
             if (message.startsWith("\"")){
                 try {
                     result = Request.searchPersonOrFilm(message, chatId);
-                } catch (IOException e) {
+                } catch (IOException | SQLException e) {
                     e.printStackTrace();
                 }
                 sendMsg(chatId, String.format("Результаты поиска:\n\n%s", result));
@@ -89,7 +87,7 @@ public class Bot extends TelegramLongPollingBot {
             } else {
                 try {
                     result = Request.searchPersonOrFilm(message, chatId);
-                } catch (IOException e) {
+                } catch (IOException | SQLException e) {
                     e.printStackTrace();
                 }
                 sendMsg(chatId, "Результаты поиска:\n\n" + result);
@@ -221,12 +219,7 @@ public class Bot extends TelegramLongPollingBot {
         try {
             Connection conn = connectDB();
 
-            String sql = "select * from Subscribes where exists(select * from Subscribes where chatId = ? and personId = ?)";
-            PreparedStatement preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setInt(1, Integer.parseInt(chatId));
-            preparedStatement.setInt(2, Integer.parseInt(id));
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()){
+            if (subscribeExistQuery(chatId, id, conn).next()){
                 sendMsg(chatId, "Вы уже подписаны на " + getName(id));
             } else confirmSubscribe(chatId, id);
             conn.close();
@@ -242,16 +235,10 @@ public class Bot extends TelegramLongPollingBot {
             sendMsg(chatId, "Не найдено");
             return;
         }
-
         try {
             Connection conn = connectDB();
 
-            String sql = "select * from Subscribes where exists(select * from Subscribes where chatId = ? and personId = ?)";
-            PreparedStatement preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setInt(1, Integer.parseInt(chatId));
-            preparedStatement.setInt(2, Integer.parseInt(id));
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()){
+            if (subscribeExistQuery(chatId, id, conn).next()){
                 confirmUnsubscribe(chatId, id);
             } else sendMsg(chatId, "Вы не подписаны на " + getName(id));
 
@@ -262,6 +249,16 @@ public class Bot extends TelegramLongPollingBot {
         }
 
     }
+
+    static ResultSet subscribeExistQuery(String chatId, String id, Connection connection) throws SQLException {
+        String sql = "select * from Subscribes where exists(select * from Subscribes where chatId = ? and personId = ?)";
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        preparedStatement.setInt(1, Integer.parseInt(chatId));
+        preparedStatement.setInt(2, Integer.parseInt(id));
+        ResultSet resultSet = preparedStatement.executeQuery();
+        return resultSet;
+    }
+
     private void subscribe(String chatId, String id) throws IOException {
 
         try {
@@ -321,7 +318,7 @@ public class Bot extends TelegramLongPollingBot {
         return str;
     }
 
-    private static Connection connectDB() throws SQLException {
+    static Connection connectDB() throws SQLException {
         Connection conn;
         Driver driver = new com.mysql.cj.jdbc.Driver();
         DriverManager.registerDriver(driver);

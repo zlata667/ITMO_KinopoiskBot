@@ -13,7 +13,7 @@ import com.google.gson.reflect.TypeToken;
 class Request {
     static Map<String, List<FilmOrPerson>> filmOrPersonResultMap = new HashMap<>();
 
-    static String searchPersonOrFilm(String request, String chatId) throws IOException {
+    static String searchPersonOrFilm(String request, String chatId) throws IOException, SQLException {
 
         request = URLEncoder.encode(request);// кодируем на случай, если поиск на русском языке
 
@@ -36,7 +36,6 @@ class Request {
         in.close();
 
         String result = response.toString();
-        System.out.println(result);
 
         if (result.length() == 2) {
             return "Нет результатов";
@@ -55,33 +54,20 @@ class Request {
                 + "\n\nДля того, чтобы подписаться на получение фильмов, нажмите subscribe рядом с выбранной личностью.";
     }
 
-    private static String printResult(List<FilmOrPerson> resultList, String chatId) throws IOException {
+    private static String printResult(List<FilmOrPerson> resultList, String chatId) throws IOException, SQLException {
 
         Map<String, List<String>> namesAndTitles = new HashMap<>();
-        List<FilmOrPerson> subscribesFotChatId = Bot.subscribeList.get(chatId); // подписки конкретного пользователя;
 
-        if (Bot.subscribeList.containsKey(chatId)){
-            namesAndTitles.put(chatId, new ArrayList<>());
-            for (int i = 0; i < resultList.size(); i++) {
-                int count = 0;
-                for (FilmOrPerson filmOrPerson : subscribesFotChatId) {
-                    if (resultList.get(i).getId().equals(filmOrPerson.getId())) {
-                        FilmOrPerson res = resultList.get(i);
-                        addNames(namesAndTitles.get(chatId), "/unsubscribe", res, res.getType(), i, res.getId());
-                        count++;
-                    }
-                }
-                if (count == 0){
-                    FilmOrPerson res = resultList.get(i);
-                    addNames(namesAndTitles.get(chatId), "/subscribe", res, res.getType(), i, res.getId());
-                }
+        Connection conn = Bot.connectDB();
+        namesAndTitles.put(chatId, new ArrayList<>());
+        for (int i = 0; i < resultList.size(); i++) {
 
-            }
-        } else{
-            namesAndTitles.put(chatId, new ArrayList<>());
-            for (int j = 0; j < resultList.size(); j++) {
-                FilmOrPerson res = resultList.get(j);
-                addNames(namesAndTitles.get(chatId), "/subscribe", res, res.getType(), j, res.getId());
+            FilmOrPerson res = resultList.get(i);
+            if (Bot.subscribeExistQuery(chatId, resultList.get(i).getId(), conn).next()){
+                addNames(namesAndTitles.get(chatId), "/unsubscribe", res, res.getType(), i, res.getId());
+
+            } else{
+                addNames(namesAndTitles.get(chatId), "/subscribe", res, res.getType(), i, res.getId());
             }
         }
         return Bot.toNormalString(String.join("\n", namesAndTitles.get(chatId)));

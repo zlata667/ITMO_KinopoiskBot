@@ -37,7 +37,7 @@ public class App{
 
         Timer time = new Timer();
         ScheduledTask task = new ScheduledTask();
-        time.schedule(task, 0, 3 * 60000);
+        time.schedule(task, 0, 1 * 60000);
 
     }
 

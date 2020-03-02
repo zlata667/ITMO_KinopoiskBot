@@ -3,28 +3,34 @@ package com.mycompany.app;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 
 public class ScheduledTask extends TimerTask {
     @Override
     public void run() {
-        if (!Bot.subscribeList.isEmpty()) {
-            for (Map.Entry<String, List<FilmOrPerson>> entry : Bot.subscribeList.entrySet()) {
-                if (!entry.getValue().isEmpty()) {
-                    String chatId = entry.getKey();
-                    sendMessage(chatId, "Фильмы по вашим подпискам:");
-                    for (FilmOrPerson filmOrPerson : entry.getValue()) {
-                        try {
-                            String text = Request.generateRandomFilmFromFilmography(
-                                    Objects.requireNonNull(Request.searchFilmography(filmOrPerson.getId())));
-                            sendMessage(chatId, filmOrPerson.getName() + ":\n\n " + text);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
+
+        try {
+            Connection conn = Bot.connectDB();
+            String sql = "select * from Subscribes";
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()){
+                String chatId = String.valueOf(resultSet.getInt("chatId"));
+                sendMessage(chatId, "Фильм с участием " + resultSet.getString("personName"));
+                String text = Request.generateRandomFilmFromFilmography(
+                        Objects.requireNonNull(Request.searchFilmography(String.valueOf(resultSet.getInt("personId")))));
+                sendMessage(chatId, text);
             }
+
+        } catch (SQLException | IOException e) {
+            e.printStackTrace();
         }
+
+
     }
 
     private void sendMessage(String chatId, String message){
