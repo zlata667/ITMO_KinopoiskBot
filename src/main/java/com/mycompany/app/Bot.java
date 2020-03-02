@@ -1,6 +1,5 @@
 package com.mycompany.app;
 
-import com.mysql.fabric.jdbc.FabricMySQLDriver;
 import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -219,45 +218,54 @@ public class Bot extends TelegramLongPollingBot {
             return;
         }
 
-        if (subscribeList.containsKey(chatId)) {
-            for (FilmOrPerson fpObject : subscribeList.get(chatId)){
-                if (fpObject.getId().equals(id)){
-                    sendMsg(chatId, "Вы уже подписаны на " + getName(id));
-                    return;
-                }
-            }
-            confirmSubscribe(chatId, id);//передаем id для подтверждения
+        try {
+            Connection conn = connectDB();
 
-        } else {
-            subscribeList.put(chatId, new ArrayList<>());
-            subscribeNames.put(chatId, new ArrayList<>());
-            confirmSubscribe(chatId, id);//передаем id для подтверждения
+            String sql = "select * from Subscribes where exists(select * from Subscribes where chatId = ? and personId = ?)";
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setInt(1, Integer.parseInt(chatId));
+            preparedStatement.setInt(2, Integer.parseInt(id));
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()){
+                sendMsg(chatId, "Вы уже подписаны на " + getName(id));
+            } else confirmSubscribe(chatId, id);
+            conn.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+
     }
 
     private void checkUnsubscribe(String chatId, String id){
-        if (getName(id) == null){//заменить с бд
+        if (getName(id) == null){
             sendMsg(chatId, "Не найдено");
             return;
         }
-        for (FilmOrPerson fpObject : subscribeList.get(chatId)){
-            if (fpObject.getId().equals(id)){
-                confirmUnsubscribe(chatId, id);
-                return;
-            }
-        }
-        sendMsg(chatId, "Вы не подписаны на " + getName(id));
-    }
 
+        try {
+            Connection conn = connectDB();
+
+            String sql = "select * from Subscribes where exists(select * from Subscribes where chatId = ? and personId = ?)";
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setInt(1, Integer.parseInt(chatId));
+            preparedStatement.setInt(2, Integer.parseInt(id));
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()){
+                confirmUnsubscribe(chatId, id);
+            } else sendMsg(chatId, "Вы не подписаны на " + getName(id));
+
+            conn.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+    }
     private void subscribe(String chatId, String id) throws IOException {
 
-        Connection conn;
-        ResultSet resultSet = null;
         try {
-
-            Driver driver = new FabricMySQLDriver();
-            DriverManager.registerDriver(driver);
-            conn = DriverManager.getConnection("jdbc:mysql://remotemysql.com:3306/wssmTKXCex", "wssmTKXCex", "WhxmR8YpfY");
+            Connection conn = connectDB();
 
             String sql = "insert into Subscribes values (null, ?, ?, ?)";
             PreparedStatement preparedStatement = conn.prepareStatement(sql);
@@ -266,42 +274,35 @@ public class Bot extends TelegramLongPollingBot {
             preparedStatement.setString(3, getName(id));
             preparedStatement.executeUpdate();
 
-            sql = "select personName from Subscribes where chatId = ?";
-            preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setInt(1, Integer.parseInt(chatId));
-            resultSet = preparedStatement.executeQuery();
-
             conn.close();
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
-//
-//        FilmOrPerson newFilmOrPerson = new FilmOrPerson();
-//        subscribeList.get(chatId).add(newFilmOrPerson);
-//        newFilmOrPerson.setId(id);
-//        newFilmOrPerson.setName(getName(id, chatId));
-//        subscribeNames.get(chatId).add(getName(id, chatId));
         sendMsg(chatId, "Вы подписались на получение фильмов с участием " + getName(id));
-        sendMsg(chatId, "Ваши подписки: " + resultSet.toString());
-
-
+        sendMsg(chatId, "Ваши подписки: " + getListOfNamesFromSubscribes(chatId, id));
     }
 
     private void unsubscribe(String chatId, String id){
-        List<FilmOrPerson> subscribesForChatId = subscribeList.get(chatId);
-        for (FilmOrPerson sub : subscribesForChatId){
-            if (sub.getId().equals(id)){
-                subscribesForChatId.remove(sub);
-                String name = getName(id);
-                subscribeNames.get(chatId).remove(name);
-                sendMsg(chatId, "Вы отписались от "+ getName(id));
-                if (!subscribeNames.get(chatId).isEmpty()){
-                    sendMsg(chatId, "Ваши подписки: " + subscribeNames.get(chatId).toString());
-                }
-            }
+
+        try {
+            Connection conn = connectDB();
+
+            String sql = "delete from Subscribes where chatId = ? and personId = ?";
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setInt(1, Integer.parseInt(chatId));
+            preparedStatement.setInt(2, Integer.parseInt(id));
+            preparedStatement.executeUpdate();
+
+            conn.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+        sendMsg(chatId, "Вы отписались от "+ getName(id));
+        sendMsg(chatId, "Ваши подписки: " + getListOfNamesFromSubscribes(chatId, id));
+
     }
 
     private String getName(String id) {
@@ -318,5 +319,33 @@ public class Bot extends TelegramLongPollingBot {
                 .replaceAll("&ndash;","-").replaceAll("&#237;", "i")
                 .replaceAll("&eacute;", "e");
         return str;
+    }
+
+    private static Connection connectDB() throws SQLException {
+        Connection conn;
+        Driver driver = new com.mysql.cj.jdbc.Driver();
+        DriverManager.registerDriver(driver);
+        conn = DriverManager.getConnection("jdbc:mysql://remotemysql.com:3306/wssmTKXCex", "wssmTKXCex", "WhxmR8YpfY");
+
+        return conn;
+    }
+
+    private static String getListOfNamesFromSubscribes(String chatId, String id){
+        List<String> names = new ArrayList<>();
+        try {
+            Connection conn = connectDB();
+            String sql = "select personName from Subscribes where chatId = ?";
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setInt(1, Integer.parseInt(chatId));
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()){
+                names.add(resultSet.getString(1));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return names.toString();
     }
 }

@@ -1,6 +1,5 @@
 package com.mycompany.app;
 
-import com.mysql.fabric.jdbc.FabricMySQLDriver;
 
 import java.sql.*;
 
@@ -8,7 +7,7 @@ public class DataBase {
     public Statement setConnection() throws SQLException {
         Connection conn;
         try {
-            Driver driver = new FabricMySQLDriver();
+            Driver driver = new com.mysql.cj.jdbc.Driver();
             DriverManager.registerDriver(driver);
         } catch (SQLException e) {
             e.printStackTrace();

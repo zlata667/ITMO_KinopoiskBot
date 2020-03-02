@@ -8,10 +8,7 @@ import java.util.*;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.mysql.fabric.jdbc.FabricMySQLDriver;
 
-import javax.management.Query;
-import javax.xml.crypto.Data;
 
 class Request {
     static Map<String, List<FilmOrPerson>> filmOrPersonResultMap = new HashMap<>();
@@ -165,7 +162,7 @@ class Request {
         Connection conn;
         try {
 
-            Driver driver = new FabricMySQLDriver();
+            Driver driver = new com.mysql.cj.jdbc.Driver();
             DriverManager.registerDriver(driver);
             conn = DriverManager.getConnection("jdbc:mysql://remotemysql.com:3306/wssmTKXCex", "wssmTKXCex", "WhxmR8YpfY");
 

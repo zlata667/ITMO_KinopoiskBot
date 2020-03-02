@@ -8,8 +8,6 @@ import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
-import sun.plugin2.message.Message;
-
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
@@ -25,8 +23,8 @@ public class App{
             TelegramBotsApi telegram = new TelegramBotsApi();
 
             DefaultBotOptions options = ApiContext.getInstance(DefaultBotOptions.class);
-            options.setProxyHost("178.170.168.212");
-            options.setProxyPort(1080);
+            options.setProxyHost("49.12.0.103");
+            options.setProxyPort(10403);
             //
             //178.170.168.212:1080
             //Select proxy type: [HTTP|SOCKS4|SOCKS5] (default: NO_PROXY)
