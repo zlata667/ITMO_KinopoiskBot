@@ -17,8 +17,8 @@ public class Bot extends TelegramLongPollingBot {
 
     private static final String BOT_NAME = "Kinopoisk_Bot";
     private static final String BOT_TOKEN = "983197607:AAF2W3iyYyoFOSh8zm4BvDALGtmHyz7C8H4";
-//    private static final String BOT_NAME = "TestBot";
- //   private static final String BOT_TOKEN = "1066474013:AAHJeh_0KbJrc3aoym_sDPDmDKWzsUfDOiU";
+//    private static final String BOT_NAME = "TestBot"
+//    private static final String BOT_TOKEN = "1066474013:AAHJeh_0KbJrc3aoym_sDPDmDKWzsUfDOiU";
 
     private String result = null;
 
@@ -69,6 +69,11 @@ public class Bot extends TelegramLongPollingBot {
             }
             if (message.contains("/random")){
                 RandomFromGenre.printGenres(chatId);
+                return;
+            }
+
+            if (message.contains("/my_subscribes")){
+                sendMsg(chatId, "Ваши подписки: " + getListOfNamesFromSubscribes(chatId));
                 return;
             }
 
@@ -218,7 +223,6 @@ public class Bot extends TelegramLongPollingBot {
 
         try {
             Connection conn = connectDB();
-
             if (subscribeExistQuery(chatId, id, conn).next()){
                 sendMsg(chatId, "Вы уже подписаны на " + getName(id));
             } else confirmSubscribe(chatId, id);
@@ -237,11 +241,9 @@ public class Bot extends TelegramLongPollingBot {
         }
         try {
             Connection conn = connectDB();
-
             if (subscribeExistQuery(chatId, id, conn).next()){
                 confirmUnsubscribe(chatId, id);
             } else sendMsg(chatId, "Вы не подписаны на " + getName(id));
-
             conn.close();
 
         } catch (SQLException e) {
@@ -255,8 +257,7 @@ public class Bot extends TelegramLongPollingBot {
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         preparedStatement.setInt(1, Integer.parseInt(chatId));
         preparedStatement.setInt(2, Integer.parseInt(id));
-        ResultSet resultSet = preparedStatement.executeQuery();
-        return resultSet;
+        return preparedStatement.executeQuery();
     }
 
     private void subscribe(String chatId, String id) throws IOException {
@@ -278,7 +279,7 @@ public class Bot extends TelegramLongPollingBot {
         }
 
         sendMsg(chatId, "Вы подписались на получение фильмов с участием " + getName(id));
-        sendMsg(chatId, "Ваши подписки: " + getListOfNamesFromSubscribes(chatId, id));
+        sendMsg(chatId, "Ваши подписки: " + getListOfNamesFromSubscribes(chatId));
     }
 
     private void unsubscribe(String chatId, String id){
@@ -298,7 +299,7 @@ public class Bot extends TelegramLongPollingBot {
             e.printStackTrace();
         }
         sendMsg(chatId, "Вы отписались от "+ getName(id));
-        sendMsg(chatId, "Ваши подписки: " + getListOfNamesFromSubscribes(chatId, id));
+        sendMsg(chatId, "Ваши подписки: " + getListOfNamesFromSubscribes(chatId));
 
     }
 
@@ -327,7 +328,7 @@ public class Bot extends TelegramLongPollingBot {
         return conn;
     }
 
-    private static String getListOfNamesFromSubscribes(String chatId, String id){
+    private static String getListOfNamesFromSubscribes(String chatId){
         List<String> names = new ArrayList<>();
         try {
             Connection conn = connectDB();
@@ -339,6 +340,7 @@ public class Bot extends TelegramLongPollingBot {
             while (resultSet.next()){
                 names.add(resultSet.getString(1));
             }
+            conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }

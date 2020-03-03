@@ -23,9 +23,9 @@ public class App{
             TelegramBotsApi telegram = new TelegramBotsApi();
 
             DefaultBotOptions options = ApiContext.getInstance(DefaultBotOptions.class);
-            options.setProxyHost("49.12.0.103");
-            options.setProxyPort(10403);
-            //
+            options.setProxyHost("195.201.15.253");
+            options.setProxyPort(1080);
+            //195.201.15.253:1080
             //178.170.168.212:1080
             //Select proxy type: [HTTP|SOCKS4|SOCKS5] (default: NO_PROXY)
             options.setProxyType(DefaultBotOptions.ProxyType.SOCKS5);
@@ -37,7 +37,7 @@ public class App{
 
         Timer time = new Timer();
         ScheduledTask task = new ScheduledTask();
-        time.schedule(task, 0, 1 * 60000);
+        time.schedule(task, 0, 2 * 60000);
 
     }
 

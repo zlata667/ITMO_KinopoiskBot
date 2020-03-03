@@ -183,11 +183,8 @@ class Request {
 
         Gson gson = new Gson();
         FGenre genres = gson.fromJson(response.toString(), FGenre.class);
-        List<Info> inf = genres.getItemsInfo();//список фильмов в виде объектов Info
 
-
-
-        return inf;
+        return genres.getItemsInfo();
 
     }
 

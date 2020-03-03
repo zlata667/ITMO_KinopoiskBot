@@ -12,7 +12,6 @@ import java.util.*;
 public class ScheduledTask extends TimerTask {
     @Override
     public void run() {
-
         try {
             Connection conn = Bot.connectDB();
             String sql = "select * from Subscribes";
@@ -22,15 +21,14 @@ public class ScheduledTask extends TimerTask {
                 String chatId = String.valueOf(resultSet.getInt("chatId"));
                 sendMessage(chatId, "Фильм с участием " + resultSet.getString("personName"));
                 String text = Request.generateRandomFilmFromFilmography(
-                        Objects.requireNonNull(Request.searchFilmography(String.valueOf(resultSet.getInt("personId")))));
+                        Objects.requireNonNull(Request.searchFilmography(String.valueOf(resultSet
+                                .getInt("personId")))));
                 sendMessage(chatId, text);
             }
-
+            conn.close();
         } catch (SQLException | IOException e) {
             e.printStackTrace();
         }
-
-
     }
 
     private void sendMessage(String chatId, String message){
